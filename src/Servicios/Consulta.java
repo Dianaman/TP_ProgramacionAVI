@@ -22,10 +22,7 @@ public class Consulta {
 		ArrayList<String> values = new ArrayList<String>();
 		ArrayList<String> fields = new ArrayList<String>();
 
-		System.out.println(tabla);
 		for(Field f : fieldsRaw){
-
-			System.out.println("fields "+ f.getName());
 			if(f.getAnnotation(Id.class) == null){
 				String columna = getColumnName(f);
 				fields.add(columna);
@@ -62,7 +59,8 @@ public class Consulta {
 		return nuevoId;
 	}
 	
-	public static void modificar(Object o){
+	public static long modificar(Object o){
+		long idModificado = 0;
 		Class c = o.getClass();
 		String tabla = getTableName(c);
 		ArrayList<Field> fieldsRaw = UBean.obtenerAtributos(o);
@@ -85,7 +83,6 @@ public class Consulta {
 				}
 				values.add(valor.toString());
 			} else {
-				campoId = f.getName();
 				campoValue = UBean.ejecutarGet(o, f.getName()).toString();
 			}
 		}
@@ -102,16 +99,22 @@ public class Consulta {
 			}
 		}
 		
-		query.append(" WHERE " + campoId + " = " + campoValue);
+		query.append(" WHERE Id = " + campoValue);
 		
 		System.out.println(query);
 		
 		try {
 			CallableStatement st = UConexion.obtenerConexion().prepareCall(query.toString());
 			st.execute();
+			st.getGeneratedKeys();
+			ResultSet generatedKeys = st.getGeneratedKeys();
+            if (generatedKeys.next()) {
+                idModificado = generatedKeys.getLong(1);
+            }
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+		return idModificado;
 	}
 	
 	public static void eliminar(Object o){
@@ -172,13 +175,47 @@ public class Consulta {
 		return objeto;
 	}
 	
-	public long guardarModificar(Object o) {
-		int idUpsertado = 0;
+	public static long guardarModificar(Object o) {
+		long idUpsertado = modificar(o);
+		if(idUpsertado == 0) {
+			idUpsertado = guardar(o);
+		}
 		return idUpsertado;
 	}
 	
-	public List<Object> obtenerTodos(Class clase) {
+	public static List<Object> obtenerTodos(Class c) {
 		List<Object> objs = new ArrayList<Object>();
+		
+		String tabla = getTableName(c);
+		Field[] atributos = c.getDeclaredFields();
+		
+		
+		String query = "SELECT * FROM " + tabla;
+		
+		try {
+			CallableStatement st = UConexion.obtenerConexion().prepareCall(query);
+			ResultSet rs = st.executeQuery(query);
+			
+			
+			while(rs.next()){
+				Object objeto = c.newInstance();
+				
+				for(int i=1; i<=atributos.length; i++){
+					Object valor = rs.getObject(i);
+					UBean.ejecutarSet(objeto, atributos[i-1].getName(), valor);
+				}
+				
+				objs.add(objeto);
+			}
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} catch (InstantiationException e) {
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		}
+		
 		return objs;
 	}
 	

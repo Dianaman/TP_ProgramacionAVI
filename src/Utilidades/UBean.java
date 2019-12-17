@@ -10,7 +10,6 @@ import Anotaciones.Id;
 
 public class UBean {
 	public static ArrayList<Field> obtenerAtributos(Object obj){
-		System.out.println(obj);
 		Class c = obj.getClass();
 		Field[] fields = c.getDeclaredFields();
 		
