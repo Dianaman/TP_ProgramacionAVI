@@ -1,5 +1,6 @@
 package Principal;
 import Anotaciones.Columna;
+import Anotaciones.Foraneo;
 import Anotaciones.Id;
 import Anotaciones.Tabla;
 
@@ -10,6 +11,9 @@ public class Persona {
 	private int Id;
 	@Columna(nombre="Nombre")
 	private String Nombre;
+	@Foraneo()
+	@Columna(nombre="Domicilio")
+	private Domicilio domicilio;
 	
 	public void setNombre(String nombre){
 		this.Nombre = nombre;
@@ -25,5 +29,13 @@ public class Persona {
 	
 	public int getId(){
 		return this.Id;
+	}
+	
+	public void setDomicilio(Domicilio dom) {
+		this.domicilio = dom;
+	}
+	
+	public Domicilio getDomicilio() {
+		return this.domicilio;
 	}
 }

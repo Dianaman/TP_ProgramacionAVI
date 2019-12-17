@@ -10,7 +10,7 @@ public class Principal {
 
 	public static void main(String[] args) {
 
-		/*Persona persona = new Persona();
+		Persona persona = new Persona();
 		persona.setNombre("Gerardo");
 		long id = Consulta.guardar(persona);
 		
@@ -22,15 +22,18 @@ public class Principal {
 		
 		persona = (Persona) obtenerYMostrar(id);
 		
-		Consulta.eliminar(persona);*/
-
+		Consulta.eliminar(persona);
+		/*Domicilio dom = new Domicilio();
+		dom.setCalle("Austria");
+		dom.setAltura(1890);
 		Persona persona = new Persona();
 		persona.setNombre("Delfina");
 		persona.setId(1);
+		persona.setDomicilio(dom);
 		long idModificado = Consulta.guardarModificar(persona);
 		System.out.println("id modificado: " + idModificado);
 		persona = (Persona) obtenerYMostrar(idModificado);
-		
+		*/
 		List<Object> personasObj = Consulta.obtenerTodos(Persona.class);
 		for(Object p : personasObj) {
 			for(Field f : UBean.obtenerAtributos(p)){

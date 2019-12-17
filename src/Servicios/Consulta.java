@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import Anotaciones.Columna;
+import Anotaciones.Foraneo;
 import Anotaciones.Id;
 import Anotaciones.Tabla;
 import Utilidades.UBean;
@@ -21,21 +22,31 @@ public class Consulta {
 		ArrayList<Field> fieldsRaw = UBean.obtenerAtributos(o);
 		ArrayList<String> values = new ArrayList<String>();
 		ArrayList<String> fields = new ArrayList<String>();
+		
+		long idForaneo = guardarEnCascada(o);
 
 		for(Field f : fieldsRaw){
 			if(f.getAnnotation(Id.class) == null){
-				String columna = getColumnName(f);
-				fields.add(columna);
-				String field = "";
-				if(f.getType() == String.class){
-					field += "'";
+				if(f.getAnnotation(Foraneo.class) == null || idForaneo != 0) {
+					String columna = getColumnName(f);
+					fields.add(columna);
+					String field = "";
+					if(f.getType() == String.class){
+						field += "'";
+					}
+					
+					if (f.getAnnotation(Foraneo.class) != null) {
+						field += idForaneo;
+					} else {
+						field += UBean.ejecutarGet(o, columna).toString();
+					}
+					
+					if (f.getType() == String.class) {
+						field += "'";
+					}
+					
+					values.add(field);
 				}
-				field += UBean.ejecutarGet(o, columna).toString();
-				if(f.getType() == String.class){
-					field += "'";
-				}
-				
-				values.add(field);
 			}
 		}
 		
@@ -71,6 +82,7 @@ public class Consulta {
 		
 		for(Field f : fieldsRaw){
 			if(f.getAnnotation(Id.class) == null){
+				if(f.getAnnotation(Foraneo.class) == null) {
 				String columna = getColumnName(f);
 				fields.add(columna);
 				StringBuilder valor = new StringBuilder();
@@ -82,6 +94,7 @@ public class Consulta {
 					valor.append("'");
 				}
 				values.add(valor.toString());
+				}
 			} else {
 				campoValue = UBean.ejecutarGet(o, f.getName()).toString();
 			}
@@ -202,6 +215,7 @@ public class Consulta {
 				
 				for(int i=1; i<=atributos.length; i++){
 					Object valor = rs.getObject(i);
+
 					UBean.ejecutarSet(objeto, atributos[i-1].getName(), valor);
 				}
 				
@@ -217,6 +231,29 @@ public class Consulta {
 		}
 		
 		return objs;
+	}
+
+	public static long guardarEnCascada(Object o) {
+		ArrayList<Field> fieldsRaw = UBean.obtenerAtributos(o);
+		boolean tieneObjetoAnidado = false;
+		long id = 0;
+
+		for(Field f : fieldsRaw){
+			if(f.getAnnotation(Foraneo.class) != null){
+				Object anidado = null;
+				try {
+					anidado = UBean.ejecutarGet(o, f.getName());
+					if(anidado != null) {
+						id = guardar(anidado);
+					}
+				} catch (IllegalArgumentException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				break;
+			}
+		}
+		return id;
 	}
 	
 	private static String getTableName(Class c) {

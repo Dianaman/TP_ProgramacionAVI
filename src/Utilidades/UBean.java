@@ -30,20 +30,20 @@ public class UBean {
 			String nombreMetodo = m.getName().toLowerCase();
 			
 			if(nombreMetodo.startsWith("set") && nombreMetodo.contains(att.toLowerCase()) && 
-				m.getParameterCount() == 1){
-				param[0] = valor;
-
-				try {
-					m.invoke(o, param);
-				} catch (IllegalAccessException e) {
-					e.printStackTrace();
-				} catch (IllegalArgumentException e) {
-					e.printStackTrace();
-				} catch (InvocationTargetException e) {
-					e.printStackTrace();
-				}
-				
-				break;
+			m.getParameterCount() == 1){
+					param[0] = valor;
+	
+					try {
+						m.invoke(o, param);
+					} catch (IllegalAccessException e) {
+						e.printStackTrace();
+					} catch (IllegalArgumentException e) {
+						//e.printStackTrace();
+					} catch (InvocationTargetException e) {
+						e.printStackTrace();
+					}
+					
+					break;
 			}
 		}
 	}
