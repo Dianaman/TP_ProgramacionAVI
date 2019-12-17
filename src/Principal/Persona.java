@@ -3,7 +3,7 @@ import Anotaciones.Columna;
 import Anotaciones.Id;
 import Anotaciones.Tabla;
 
-@Tabla(nombre="T_Persona")
+@Tabla(nombre="Persona")
 public class Persona {
 	@Id
 	@Columna(nombre="Id")

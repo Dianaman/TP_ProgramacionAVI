@@ -3,18 +3,21 @@ package Utilidades;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.ResourceBundle;
 
 public class UConexion {
 	private static Connection conexion;
 	
 	private static Connection abrirConexion(){
-		// TODO utilizar framework.properties
+		ResourceBundle rb = ResourceBundle.getBundle("framework");
+		
+		
 		try {
-			Class.forName("com.mysql.jdbc.Driver");
+			Class.forName(rb.getString("driver"));
 
-			String con = "jdbc:mysql://localhost:3306/db";
+			String con = rb.getString("db.name");
 			
-			conexion = DriverManager.getConnection(con, "root", "");
+			conexion = DriverManager.getConnection(con, rb.getString("db.user"), rb.getString("db.pass"));
 		} catch (ClassNotFoundException e1) {
 			e1.printStackTrace();
 		}

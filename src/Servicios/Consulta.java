@@ -5,29 +5,35 @@ import java.sql.CallableStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
+import Anotaciones.Columna;
 import Anotaciones.Id;
+import Anotaciones.Tabla;
 import Utilidades.UBean;
 import Utilidades.UConexion;
 
 public class Consulta {
-	public static void guardar(Object o){
+	public static long guardar(Object o){
+		long nuevoId = 0;
 		Class c = o.getClass();
-		String tabla = c.getSimpleName();// TODO usar annotation
+		String tabla = getTableName(c);
 		ArrayList<Field> fieldsRaw = UBean.obtenerAtributos(o);
 		ArrayList<String> values = new ArrayList<String>();
 		ArrayList<String> fields = new ArrayList<String>();
 
 		System.out.println(tabla);
 		for(Field f : fieldsRaw){
+
+			System.out.println("fields "+ f.getName());
 			if(f.getAnnotation(Id.class) == null){
-				System.out.println(f.getClass().getAnnotations().toString());
-				fields.add(f.getName()); // TODO usar annotation
+				String columna = getColumnName(f);
+				fields.add(columna);
 				String field = "";
 				if(f.getType() == String.class){
 					field += "'";
 				}
-				field += UBean.ejecutarGet(o, f.getName()).toString();
+				field += UBean.ejecutarGet(o, columna).toString();
 				if(f.getType() == String.class){
 					field += "'";
 				}
@@ -44,14 +50,21 @@ public class Consulta {
 		try {
 			CallableStatement st = UConexion.obtenerConexion().prepareCall(query);
 			st.execute();
+			st.getGeneratedKeys();
+			ResultSet generatedKeys = st.getGeneratedKeys();
+            if (generatedKeys.next()) {
+                nuevoId = generatedKeys.getLong(1);
+            }
+	        
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+		return nuevoId;
 	}
 	
 	public static void modificar(Object o){
 		Class c = o.getClass();
-		String tabla = c.getSimpleName();
+		String tabla = getTableName(c);
 		ArrayList<Field> fieldsRaw = UBean.obtenerAtributos(o);
 		ArrayList<String> values = new ArrayList<String>();
 		ArrayList<String> fields = new ArrayList<String>();
@@ -60,12 +73,13 @@ public class Consulta {
 		
 		for(Field f : fieldsRaw){
 			if(f.getAnnotation(Id.class) == null){
-				fields.add(f.getName());
+				String columna = getColumnName(f);
+				fields.add(columna);
 				StringBuilder valor = new StringBuilder();
 				if(f.getType() == String.class){
 					valor.append("'");
 				}
-				valor.append(UBean.ejecutarGet(o, f.getName()).toString());
+				valor.append(UBean.ejecutarGet(o, columna).toString());
 				if(f.getType() == String.class){
 					valor.append("'");
 				}
@@ -102,21 +116,19 @@ public class Consulta {
 	
 	public static void eliminar(Object o){
 		Class c = o.getClass();
-		String tabla = c.getSimpleName();
+		String tabla = getTableName(c);
 		ArrayList<Field> fieldsRaw = UBean.obtenerAtributos(o);
-		String campoId = "";
 		String campoValue = "";
 		
 		for(Field f : fieldsRaw){
 			if(f.getAnnotation(Id.class) != null){
-				campoId = f.getName();
 				campoValue = UBean.ejecutarGet(o, f.getName()).toString();
 				break;
 			}
 		}
 		
 		StringBuilder query = new StringBuilder("DELETE FROM " + tabla + 
-				" WHERE " + campoId + " = "+ campoValue);
+				" WHERE Id = "+ campoValue);
 		
 		System.out.println(query);
 		
@@ -129,10 +141,10 @@ public class Consulta {
 	}
 	
 	public static Object obtenerPorId(Class c, Object id){
-		String tabla = c.getSimpleName();
+		String tabla = getTableName(c);
 		Field[] atributos = c.getDeclaredFields();
 		
-		Object objeto=null;
+		Object objeto = null;
 		
 		String query = "SELECT * FROM " + tabla + " WHERE Id = " + id;
 		
@@ -142,7 +154,6 @@ public class Consulta {
 			
 			objeto = c.newInstance();
 			
-			String descripcion = "";
 			while(rs.next()){
 				for(int i=1; i<=atributos.length; i++){
 					Object valor = rs.getObject(i);
@@ -159,5 +170,33 @@ public class Consulta {
 		}
 		
 		return objeto;
+	}
+	
+	public long guardarModificar(Object o) {
+		int idUpsertado = 0;
+		return idUpsertado;
+	}
+	
+	public List<Object> obtenerTodos(Class clase) {
+		List<Object> objs = new ArrayList<Object>();
+		return objs;
+	}
+	
+	private static String getTableName(Class c) {
+		Tabla claseTabla = (Tabla) c.getAnnotation(Tabla.class);
+		String tabla = claseTabla.nombre();
+		if(tabla == "") {
+			tabla = c.getSimpleName();
+		}
+		return tabla;
+	}
+	
+	private static String getColumnName(Field f) {
+		Columna col = f.getAnnotation(Columna.class);
+		String columna = col.nombre();
+		if(columna == "") {
+			columna = f.getName();
+		}
+		return columna;
 	}
 }
